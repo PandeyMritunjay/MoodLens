@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>🎭 Real-Time Emotion Detection</h1>
+        <p>Experience advanced emotion detection using deep learning and computer vision.</p>
+    </div>
+
+    <div class="content">
+        <div class="video-section">
+            <div class="video-container">
+                <h2>Live Video Feed</h2>
+                <p>Watch the AI analyze emotions in real time:</p>
+                <img src="{{ url_for('video_feed') }}" alt="Emotion Detection Feed">
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>How It Works</h2>
+            <p>This application uses a pre-trained convolutional neural network to detect emotions such as:</p>
+            <ul>
+                <li>Angry</li>
+                <li>Happy</li>
+                <li>Sad</li>
+                <li>Neutral</li>
+                <li>Fearful</li>
+                <li>Disgusted</li>
+                <li>Surprised</li>
+            </ul>
+            <p>Face detection is powered by OpenCV Haar cascades, and emotion classification is achieved with TensorFlow.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 MoodLens | Built with ❤️ by Mritunjay Pandey</p>
+    </footer>
+</body>
+</html>
