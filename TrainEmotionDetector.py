@@ -55,7 +55,7 @@ emotion_model.compile(loss='categorical_crossentropy',
 emotion_model_info = emotion_model.fit(
     train_generator,
     steps_per_epoch=28709 // 100,
-    epochs=5,
+    epochs=10,
     validation_data=validation_generator,
     validation_steps=7178 // 100
 )
