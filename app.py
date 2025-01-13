@@ -1,7 +1,8 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, request, jsonify
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+import base64
 
 app = Flask(__name__)
 
@@ -13,21 +14,28 @@ emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful",
 emotion_model = load_model('model/emotion_model_full.h5')
 emotion_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Function to capture video frames and perform emotion detection
-def generate_frames():
-    cap = cv2.VideoCapture(0)  # Webcam capture
-    face_detector = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_default.xml')
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-    while True:
-        success, frame = cap.read()
-        if not success:
-            break
+@app.route('/process_frame', methods=['POST'])
+def process_frame():
+    try:
+        # Get the image data from the client
+        data = request.json['image']
+        image_data = base64.b64decode(data.split(',')[1])
+        np_array = np.frombuffer(image_data, np.uint8)
+        frame = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
         # Convert frame to grayscale
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+        # Load the face detector
+        face_detector = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_default.xml')
+
         # Detect faces
         faces = face_detector.detectMultiScale(gray_frame, scaleFactor=1.3, minNeighbors=5)
+        emotions = []
 
         for (x, y, w, h) in faces:
             # Extract face region
@@ -37,26 +45,12 @@ def generate_frames():
             # Predict emotion
             prediction = emotion_model.predict(cropped_img)
             emotion = emotion_dict[np.argmax(prediction)]
+            emotions.append(emotion)
 
-            # Draw rectangle and emotion label
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.putText(frame, emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+        return jsonify({'emotions': emotions})
 
-        # Encode frame for streaming
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-    cap.release()
-
-@app.route('/')
-def index():
-    return render_template('index.html')  # Ensure this file exists in the templates/ folder
-
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 if __name__ == "__main__":
     app.run(debug=True)

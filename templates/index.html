@@ -17,7 +17,10 @@
             <div class="video-container">
                 <h2>Live Video Feed</h2>
                 <p>Watch the AI analyze emotions in real time:</p>
-                <img src="{{ url_for('video_feed') }}" alt="Emotion Detection Feed">
+                <!-- Replace img with video -->
+                <video id="video" autoplay></video>
+                <button id="capture" class="capture-button">Analyze Emotion</button>
+                <p id="emotion-output">Detected Emotion: None</p>
             </div>
         </div>
 
@@ -40,5 +43,53 @@
     <footer>
         <p>© 2025 MoodLens | Built with ❤️ by Mritunjay Pandey</p>
     </footer>
+
+    <!-- Add JavaScript -->
+    <script>
+        const video = document.getElementById('video');
+        const emotionOutput = document.getElementById('emotion-output');
+
+        // Access the user's webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing camera: ", err);
+                emotionOutput.textContent = "Error: Unable to access the camera.";
+            });
+
+        // Capture a frame and send it to the server
+        document.getElementById('capture').addEventListener('click', () => {
+            const canvas = document.createElement('canvas'); // Temporary canvas for capturing the frame
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the frame to Base64
+            const imageData = canvas.toDataURL('image/jpeg');
+
+            // Send the frame to the backend for emotion detection
+            fetch('/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        emotionOutput.textContent = `Error: ${data.error}`;
+                    } else {
+                        emotionOutput.textContent = `Detected Emotion: ${data.emotions.join(', ')}`;
+                    }
+                })
+                .catch(err => {
+                    console.error("Error processing frame:", err);
+                    emotionOutput.textContent = "Error: Unable to process the frame.";
+                });
+        });
+    </script>
 </body>
 </html>
